@@ -28,6 +28,14 @@ CMT.timeout = 100000
 ##############################################
 
 #конвертации множителей kHz,MHz,GHz в герцы (число,множитель)
+
+
+def CheckError():
+	error_data = CMT.query(f'SYST:ERR?')
+	if error_data != '0, No error':
+		print(error_data)
+
+
 def HzConvertor(n,k):
 	if k == "kHz":
 		return int(n*1e+3)
@@ -36,7 +44,7 @@ def HzConvertor(n,k):
 	elif k == "GHz":
 		return int(n*1e+9)
 	else: return -1
-	
+
 #Пресет
 CMT.write(f'SYST:PRES')
 
@@ -45,14 +53,18 @@ CMT.write(f'CALC1:PAR:COUN 1')
 
 #Установить частототы росчерка 1Ghz и 6Ghz 
 CMT.write(f'SENS:FREQ:STAR {HzConvertor(1,"GHz")}')
+CheckError()
 CMT.write(f'SENS:FREQ:STOP {HzConvertor(6,"GHz")}')
+CheckError()
 
 #Установливаем кол-во точек в канале 1001 (points) 
 CMT.write(f'SENS:SWE:POIN 1001')
+CheckError()
 
 #Установливаем фильтр ПЧ(ширина полосы ПЧ) 3kHz 
 #imposter
-#CMT.write(f'SENS:BWID {HzConvertor(3,"kHz")}')
+CMT.write(f'SENS:BWID {HzConvertor(3,"kHz")}')
+time.sleep(1) 
 
 #Считываем данные и выводим
 star_data = CMT.query(f'SENS:FREQ:STAR?')
@@ -85,47 +97,89 @@ dictionary = {}
 for i in range(1,5):
 	if i == 4:
 		#статистика между маркерами 1-4
-		CMT.write(f'CALC1:MARK:ACT {1}')
-		CMT.write(f'CALC1:MST:DOM ON')
-		CMT.write(f'CALC1:MST:DOM:STAR {1}')
-		CMT.write(f'CALC1:MST:DOM:STOP {4}')
+		CMT.write(f'CALC1:MST:DOM:STAR 1')
+		CheckError()
+		CMT.write(f'CALC1:MST:DOM:STOP 4')
+		CheckError()
 	else:
 		#статистика между маркерами 1-2,2-3,3-4
-		CMT.write(f'CALC1:MARK:ACT {i}')
-		CMT.write(f'CALC1:MST:DOM ON')
 		CMT.write(f'CALC1:MST:DOM:STAR {i}')
+		CheckError()
 		CMT.write(f'CALC1:MST:DOM:STOP {i+1}')
+		CheckError()
 
 	#запрашиваем данные и добовляем в словарь
 	star_data = CMT.query(f'CALC1:MST:DOM:STAR?')
+	#CheckError()
 	stop_data = CMT.query(f'CALC1:MST:DOM:STOP?')
+	#CheckError()
 	mst_data = CMT.query(f'CALC:MST:DATA?')
+	#CheckError()
 	array = mst_data.split(',')
 	dictionary.update({f'{star_data}-{stop_data}':{f'mean':f'{array[0]}',f's.dev':f'{array[1]}',f'p-p':f'{array[2]}'}})
 
 #Выводим словарь
 for key, value in dictionary.items():
 	print(f'Маркеры {key}\n Среднее значение = {value["mean"]}\n Стандартное отклонение = {value["s.dev"]}\n Фактор пик-пик = {value["p-p"]}')
-	
 
-def singlescan():
-	CMT.write(f'INIT:CONT ON')
-	CMT.write(f'TRIG:SOUR BUS')
-	CMT.write(f'TRIG:SING')
-	CMT.write(f'*OPC?')
+
+def singlescan(connect):
+	connect.write(f'TRIG:SOUR BUS')
+	CheckError()
+	connect.write(f'INIT:CONT ON')
+	CheckError()
+	connect.write(f'TRIG:SING')
+	CheckError()
+	connect.write(f'*OPC?')
 	
 #Пресет
 CMT.write(f'SYST:PRES')
+CheckError()
 
 #Установливаем трассу s21
 CMT.write(f'CALC1:PAR1:DEF S21')
 
+CheckError()
+
 #Перевести тригер в режим BUS
 CMT.write(f'TRIG:SOUR BUS')
-
-sour_data = CMT.query(f'TRIG:SOUR?')
-print(sour_data)
-
-print(singlescan())
+CheckError()
 
 
+#Включить математическую статистику для всего диапазона
+CMT.write(f'CALC1:MST ON')
+
+#Выполнить однократный росчерк 
+singlescan(CMT)
+
+#Выводим значение mean
+a = CMT.query(f'CALC:MST:DATA?')
+print(a)
+CheckError()
+array = a.split(',')
+CheckError()
+print(f'mean = {array[0]}')
+
+#Включили усреднение
+CMT.write(f'SENS:AVER')
+time.sleep(1) 
+CheckError()
+
+#Установили фактор усреднения 100
+CMT.write(f'SENS1:AVER:COUN 100')
+time.sleep(1) 
+CheckError()
+
+#Выполняем рочерк 100 раз
+aver_data = CMT.query(f'SENS1:AVER:COUN?')
+
+
+print(f'aver_data = {aver_data}')
+
+for i in range(int(100)):
+	singlescan(CMT)
+	
+#Выводим значение mean
+mst_data = CMT.query(f'CALC:MST:DATA?')
+array = mst_data.split(',')
+print(f'mean = {array}')
