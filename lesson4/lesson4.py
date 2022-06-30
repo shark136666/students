@@ -29,13 +29,13 @@ CMT.timeout = 100000
 
 #конвертации множителей kHz,MHz,GHz в герцы (число,множитель)
 
-
+#Функция нахождения ошибок
 def CheckError(connect):
 	error_data = connect.query(f'SYST:ERR?')
 	if error_data != '0, No error':
 		print(error_data)
 
-
+#Функция конвертации множителей kGz,MGh,GHz в герцы
 def HzConvertor(n,k):
 	if k == "kHz":
 		return int(n*1e+3)
@@ -45,23 +45,17 @@ def HzConvertor(n,k):
 		return int(n*1e+9)
 	else: return -1
 
+#Функция однократного росчерка
 def singlescan(connect):
-
-	#print("INIT:CONT")
-	connect.write(f'INIT:CONT OFF')
-	CheckError(CMT)
-	#print("bus")
 	connect.write(f'TRIG:SOUR BUS')
 	CheckError(CMT)
-	#print("init")
+	connect.write(f'INIT:CONT OFF')
+	CheckError(CMT)
 	connect.write(f'INIT')
 	CheckError(CMT)
-	#print("sing")
 	connect.write(f'TRIG:SING')
 	CheckError(CMT)
-	#print("opc")
-	connect.write(f'*OPC?')
-	#print("end")
+	connect.query(f'*OPC?')
 	
 
 
@@ -142,8 +136,6 @@ for i in range(1,5):
 for key, value in dictionary.items():
 	print(f'Маркеры {key}\n Среднее значение = {value["mean"]}\n Стандартное отклонение = {value["s.dev"]}\n Фактор пик-пик = {value["p-p"]}')
 
-
-
 #Пресет
 CMT.write(f'SYST:PRES')
 
@@ -151,13 +143,9 @@ CMT.write(f'SYST:PRES')
 #Установливаем трассу s21
 CMT.write(f'CALC1:PAR1:DEF S21')
 
-#CheckError(CMT)
 
 #Перевести тригер в режим BUS
 CMT.write(f'TRIG:SOUR BUS')
-CheckError(CMT)
-time.sleep(1)
-CMT.write(f'INIT:CONT OFF')
 CheckError(CMT)
 
 #Включить математическую статистику для всего диапазона
@@ -168,19 +156,13 @@ singlescan(CMT)
 CheckError(CMT)
 
 #Выводим значение mean
-print("")
-
-a = CMT.query(f'CALC1:TRAC1:MST:DATA?')
-#print(CMT.query(f'CALC1:TRAC1:MST:DATA?'))
-
-CheckError(CMT)
-array = a.split(',')
+mst_data = CMT.query(f'CALC1:TRAC1:MST:DATA?')
+array = mst_data.split(',')
 CheckError(CMT)
 print(f'mean = {array[0]}')
 
 #Включили усреднение
-CMT.write(f'SENS:AVER')
-time.sleep(1) 
+CMT.write(f'SENS:AVER ON')
 CheckError(CMT)
 
 #Установили фактор усреднения 100
@@ -190,17 +172,11 @@ time.sleep(1)
 
 #Выполняем рочерк 100 раз
 aver_data = CMT.query(f'SENS1:AVER:COUN?')
-print(f'aver_data = {aver_data}')
-
-
 for i in range(int(aver_data)):
-	print("    ",i)
 	singlescan(CMT)
 
 
-	
-time.sleep(1) 
 #Выводим значение mean
-b = CMT.query(f'CALC1:TRAC1:MST:DATA?')
-array = b.split(',')
-print("mean = ", array)
+mst_data = CMT.query(f'CALC1:TRAC1:MST:DATA?')
+array = mst_data.split(',')
+print(f'mean = {array[0]}')
