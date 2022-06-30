@@ -30,8 +30,8 @@ CMT.timeout = 100000
 #конвертации множителей kHz,MHz,GHz в герцы (число,множитель)
 
 
-def CheckError():
-	error_data = CMT.query(f'SYST:ERR?')
+def CheckError(connect):
+	error_data = connect.query(f'SYST:ERR?')
 	if error_data != '0, No error':
 		print(error_data)
 
@@ -45,6 +45,26 @@ def HzConvertor(n,k):
 		return int(n*1e+9)
 	else: return -1
 
+def singlescan(connect):
+
+	#print("INIT:CONT")
+	connect.write(f'INIT:CONT OFF')
+	CheckError(CMT)
+	#print("bus")
+	connect.write(f'TRIG:SOUR BUS')
+	CheckError(CMT)
+	#print("init")
+	connect.write(f'INIT')
+	CheckError(CMT)
+	#print("sing")
+	connect.write(f'TRIG:SING')
+	CheckError(CMT)
+	#print("opc")
+	connect.write(f'*OPC?')
+	#print("end")
+	
+
+
 #Пресет
 CMT.write(f'SYST:PRES')
 
@@ -53,13 +73,13 @@ CMT.write(f'CALC1:PAR:COUN 1')
 
 #Установить частототы росчерка 1Ghz и 6Ghz 
 CMT.write(f'SENS:FREQ:STAR {HzConvertor(1,"GHz")}')
-CheckError()
+CheckError(CMT)
 CMT.write(f'SENS:FREQ:STOP {HzConvertor(6,"GHz")}')
-CheckError()
+CheckError(CMT)
 
 #Установливаем кол-во точек в канале 1001 (points) 
 CMT.write(f'SENS:SWE:POIN 1001')
-CheckError()
+CheckError(CMT)
 
 #Установливаем фильтр ПЧ(ширина полосы ПЧ) 3kHz 
 #imposter
@@ -98,15 +118,15 @@ for i in range(1,5):
 	if i == 4:
 		#статистика между маркерами 1-4
 		CMT.write(f'CALC1:MST:DOM:STAR 1')
-		CheckError()
+		CheckError(CMT)
 		CMT.write(f'CALC1:MST:DOM:STOP 4')
-		CheckError()
+		CheckError(CMT)
 	else:
 		#статистика между маркерами 1-2,2-3,3-4
 		CMT.write(f'CALC1:MST:DOM:STAR {i}')
-		CheckError()
+		CheckError(CMT)
 		CMT.write(f'CALC1:MST:DOM:STOP {i+1}')
-		CheckError()
+		CheckError(CMT)
 
 	#запрашиваем данные и добовляем в словарь
 	star_data = CMT.query(f'CALC1:MST:DOM:STAR?')
@@ -123,63 +143,64 @@ for key, value in dictionary.items():
 	print(f'Маркеры {key}\n Среднее значение = {value["mean"]}\n Стандартное отклонение = {value["s.dev"]}\n Фактор пик-пик = {value["p-p"]}')
 
 
-def singlescan(connect):
-	connect.write(f'TRIG:SOUR BUS')
-	CheckError()
-	connect.write(f'INIT:CONT ON')
-	CheckError()
-	connect.write(f'TRIG:SING')
-	CheckError()
-	connect.write(f'*OPC?')
-	
+
 #Пресет
 CMT.write(f'SYST:PRES')
-CheckError()
+
 
 #Установливаем трассу s21
 CMT.write(f'CALC1:PAR1:DEF S21')
 
-CheckError()
+#CheckError(CMT)
 
 #Перевести тригер в режим BUS
 CMT.write(f'TRIG:SOUR BUS')
-CheckError()
-
+CheckError(CMT)
+time.sleep(1)
+CMT.write(f'INIT:CONT OFF')
+CheckError(CMT)
 
 #Включить математическую статистику для всего диапазона
 CMT.write(f'CALC1:MST ON')
 
 #Выполнить однократный росчерк 
 singlescan(CMT)
+CheckError(CMT)
 
 #Выводим значение mean
-a = CMT.query(f'CALC:MST:DATA?')
-print(a)
-CheckError()
+print("")
+
+a = CMT.query(f'CALC1:TRAC1:MST:DATA?')
+#print(CMT.query(f'CALC1:TRAC1:MST:DATA?'))
+
+CheckError(CMT)
 array = a.split(',')
-CheckError()
+CheckError(CMT)
 print(f'mean = {array[0]}')
 
 #Включили усреднение
 CMT.write(f'SENS:AVER')
 time.sleep(1) 
-CheckError()
+CheckError(CMT)
 
 #Установили фактор усреднения 100
-CMT.write(f'SENS1:AVER:COUN 100')
+CMT.write(f'SENS1:AVER:COUN 10')
 time.sleep(1) 
-CheckError()
+
 
 #Выполняем рочерк 100 раз
 aver_data = CMT.query(f'SENS1:AVER:COUN?')
-
-
 print(f'aver_data = {aver_data}')
 
-for i in range(int(100)):
+
+for i in range(int(aver_data)):
+	print("    ",i)
 	singlescan(CMT)
+
+
 	
+time.sleep(1) 
 #Выводим значение mean
-mst_data = CMT.query(f'CALC:MST:DATA?')
-array = mst_data.split(',')
-print(f'mean = {array}')
+b = CMT.query(f'CALC1:TRAC1:MST:DATA?')
+array = b.split(',')
+print("mean = ", array)
