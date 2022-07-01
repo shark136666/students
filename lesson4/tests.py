@@ -25,6 +25,16 @@ CMT.read_termination='\n'
 #Set a really long timeout period for slow sweeps
 CMT.timeout = 100000
 ##############################################
+	
+#Функция конвертации множителей kGz,MGh,GHz в герцы
+def HzConvertor(n,k):
+	if k == "kHz":
+		return int(n*1e+3)
+	elif k == "MHz":
+		return int(n*1e+6)
+	elif k == "GHz":
+		return int(n*1e+9)
+	else: return -1
 
 
 #Функция нахождения ошибок
@@ -46,16 +56,6 @@ def Write(comand,connect):
 	connect.write(comand)
 
 Write(f'kekw',CMT)	
-	
-#Функция конвертации множителей kGz,MGh,GHz в герцы
-def HzConvertor(n,k):
-	if k == "kHz":
-		return int(n*1e+3)
-	elif k == "MHz":
-		return int(n*1e+6)
-	elif k == "GHz":
-		return int(n*1e+9)
-	else: return -1
 
 #Функция однократного росчерка
 def singlescan(connect):
