@@ -57,20 +57,12 @@ def singlescan(connect):
 	write(CMT, f'INIT')
 	write(CMT, f'TRIG:SING')
 	query(CMT, f'*OPC?')
-	
-#Словарь для вывода в json файл
-jsondic = {}	
 
-#Подключаемся к SNVNA
-CMT = SNVNAopen()
-
-#Пресет
-write(CMT, f'SYST:PRES')
-
-def algoritm(trac,attenuator,ifbw):
+#функция добовления трасс
+def addtrace(trac):
 	#добовляем 'trac' трасс
 	write(CMT, f'CALC1:PAR:COUN {trac}')
-		
+
 	#Выставлем трассы T11, R11, S11, T22, R22, S22...
 	c = 1
 	for i in range(1,trac + 1):
@@ -84,6 +76,10 @@ def algoritm(trac,attenuator,ifbw):
 				write(CMT, f'CALC1:PAR{i}:DEF T{c}')
 				write(CMT, f'CALC1:PAR{i}:SPOR {c}')
 			
+
+#алгоритм вычеслений СКО
+def algoritm(attenuator,ifbw):
+	
 
 	#Установить фильтр ПЧ 300 кГц
 	write(CMT, f'SENS:BWID {ifbw}')
@@ -99,17 +95,99 @@ def algoritm(trac,attenuator,ifbw):
 	#установить Код ЦАП.  АЧХ
 	write(CMT, f'SERV:RFCTL:POW:DAC 6554')
 
-
+	#росчерк трасс
 	singlescan(CMT)
+	
+	# вывод статистики
 	write(CMT,f'CALC1:MST ON')
 	write(CMT,f'CALC1:MST:DOM ON')
 	
-	for i in range(1,trac+1):
+	tracc_count =  int(query(CMT, f'CALC1:PAR:COUN?'))
+	
+	#делаем нормализацию для каждой трассы
+	for i in range(1,tracc_count+1):
+
 		write(CMT,f'CALC:PAR{i}:SEL')
 		write(CMT,f'CALC:MATH:MEM')
 		write(CMT,f'CALC:MATH:FUNC DIV')
+	
+	#росчерк трасс
+	singlescan(CMT)
+	
+	#Создаем ветку словоря с шаблона 
+	atthenuator["atthenuator"][f'{attenuator}']=atthenuator["atthenuator"]['DB']
+	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}'] = atthenuator["atthenuator"]['DB']["IF"]['GZ']
+	
+	#переменные для вывода максимумов
+	max_sdev_abs = float(0)
+	max_sdev_otn = float(0)
+	
+	for i in range(1,tracc_count+1):
+		#вывод статистики 
+		write(CMT,f'CALC:PAR{i}:SEL')
+		write(CMT,f'CALC1:MST ON')
+		write(CMT,f'CALC1:MST:DOM ON')
+		track_def =  query(CMT,f'CALC1:PAR{i}:DEF?') 
+		
+		#присвоение данных статистики
+		mst_data = query(CMT,f'CALC:MST:DATA?')
+		array = mst_data.split(',')
+		
+		# поиск макс в S и ввод данных в словарь
+		if i % 3 == 0:
+			atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"][f'{track_def}'] = float(array[1])
+			if max_sdev_otn < float(array[1]) or max_sdev_otn == 0:
+				max_sdev_otn = float(array[1])
+		# поиск макс в R и T и ввод данных в словарь
+		else:
+			atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"][f'{track_def}'] = float(array[1])
+			if max_sdev_abs < float(array[1]) or max_sdev_abs == 0:
+				max_sdev_abs = float(array[1])
+				
+	#присвоение максимумов
+	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"]['max_value'] = max_sdev_abs
+	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"]['max_value'] = max_sdev_otn
 
-algoritm(7,10,HzConvertor(300,"kHz"))
+#Словарь для вывода в json файл(шаблон)
+atthenuator = {"atthenuator": {
+      "DB":{
+        "IF":{
+          "GZ":{
+            "trace":{
+              "absolute":{
+                "max_value":"value"
+              },
+              "otnosit":{             
+                "max_value":"value"
+              }                         
+            }
+          },
+        }
+	}
+}}
+#Подключаемся к SNVNA
+CMT = SNVNAopen()
 
-#with open("sko_result.json", "w") as write_file:
-#	json.dump(jsondic, write_file, indent=2)
+#Пресет
+write(CMT, f'SYST:PRES')
+
+#создаем трассы
+addtrace(16)
+	
+""" выполнение (; 0_0 0_Q ZVO"""				
+algoritm(10,HzConvertor(300,"kHz"))
+algoritm(10,HzConvertor(30,"kHz"))
+algoritm(30,HzConvertor(300,"kHz"))
+algoritm(30,HzConvertor(30,"kHz"))
+algoritm(50,HzConvertor(300,"kHz"))
+algoritm(50,HzConvertor(30,"kHz"))
+
+#удаление шаблона
+for keys in atthenuator["atthenuator"].keys():
+	if 'GZ' in atthenuator["atthenuator"][f'{keys}']["IF"].keys():
+		del atthenuator["atthenuator"][f'{keys}']["IF"]['GZ']
+del atthenuator["atthenuator"]['DB']
+
+#запись в json
+with open("sko_result.json", "w") as write_file:
+	json.dump(atthenuator, write_file, indent=2)
