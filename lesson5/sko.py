@@ -8,12 +8,8 @@ Created on Mon Jun 21 09:28:15 2021
 import pyvisa
 import time
 import json
-from connect import SNVNAopen
-from connect import write
-from connect import query
-from connect import query_ascii_values
-from connect import HzConvertor
-from connect import singlescan
+from connect import SNVNAopen, write, query, query_ascii_values, HzConvertor, singlescan
+
 
 #кол-во портов
 c = 3
@@ -75,18 +71,18 @@ def algoritm(attenuator,ifbw):
 			
 			# поиск макс в S и ввод данных в словарь
 			if k == 1:
-				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"][f'{track_def}'] = float('{:.5f}'.format(float(mst_data[1])))
+				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"][f'{track_def}'] = mst_data[1]
 				if max_sdev_otn < float(mst_data[1]) or max_sdev_otn == 0:
 					max_sdev_otn = float(mst_data[1])
 			# поиск макс в R и T и ввод данных в словарь
 			else:
-				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"][f'{track_def}'] = float('{:.5f}'.format(float(mst_data[1])))
+				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"][f'{track_def}'] = mst_data[1]
 				if max_sdev_abs < float(mst_data[1]) or max_sdev_abs == 0:
 					max_sdev_abs = float(mst_data[1])
 				
 	#присвоение максимумов
-	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"]['max_value'] = float('{:.5f}'.format(max_sdev_abs))
-	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"]['max_value'] = float('{:.5f}'.format(max_sdev_otn))
+	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"]['max_value'] = max_sdev_abs
+	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"]['max_value'] = max_sdev_otn
 
 #Словарь для вывода в json файл(шаблон)
 atthenuator = {"atthenuator": {
@@ -110,17 +106,16 @@ CMT = SNVNAopen()
 
 #Пресет
 write(CMT, f'SYST:PRES')
-
-
 	
-""" выполнение (; 0_0 0_Q ZVO"""				
-algoritm(10,HzConvertor(300,"kHz"))
-algoritm(10,HzConvertor(3,"kHz"))
-algoritm(30,HzConvertor(300,"kHz"))
-algoritm(30,HzConvertor(3,"kHz"))
-algoritm(50,HzConvertor(300,"kHz"))
-algoritm(50,HzConvertor(3,"kHz"))
+""" выполнение (; 0_0 0_Q ZVO"""
+# список проверяемых аттенюаторов и фильтров ПЧ 
+DB = [10,30,50]
+Gz = [3, 300]	
 
+#выполнение функций
+for i in DB:
+	for j in Gz:
+		algoritm(i,HzConvertor(j,"kHz"))
 #удаление шаблона
 for keys in atthenuator["atthenuator"].keys():
 	if 'GZ' in atthenuator["atthenuator"][f'{keys}']["IF"].keys():

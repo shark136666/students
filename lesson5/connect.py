@@ -62,7 +62,6 @@ def singlescan(connect):
 
 def SNVNAopen():	
 	# Подключение к SNVNA
-	rm = visa.ResourceManager()
 	rm = visa.ResourceManager('@py')
 	#Connect to a Socket on the local machine at 5025
 	#Use the IP address of a remote machine to connect to it instead
