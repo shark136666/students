@@ -32,6 +32,11 @@ def query(inst, command):
     result = inst.query(command)
     return result
 
+@command_wrapper
+def query_ascii_values(inst, command):
+    result = inst.query_ascii_values(command)
+    return result
+	
 #запрос данных
 @command_wrapper
 def write(inst, command):

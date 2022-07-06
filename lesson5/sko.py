@@ -11,6 +11,7 @@ import json
 from connect import SNVNAopen
 from connect import write
 from connect import query
+from connect import query_ascii_values
 from connect import HzConvertor
 from connect import singlescan
 
@@ -70,19 +71,18 @@ def algoritm(attenuator,ifbw):
 			write(CMT,f'CALC1:MST ON')
 			track_def =  query(CMT,f'CALC1:PAR{k}:DEF?')
 			#присвоение данных статистики
-			mst_data = query(CMT,f'CALC:MST:DATA?')
-			array = mst_data.split(',')
+			mst_data = query_ascii_values(CMT,f'CALC:MST:DATA?')
 			
 			# поиск макс в S и ввод данных в словарь
 			if k == 1:
-				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"][f'{track_def}'] = float('{:.5f}'.format(float(array[1])))
-				if max_sdev_otn < float(array[1]) or max_sdev_otn == 0:
-					max_sdev_otn = float(array[1])
+				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["otnosit"][f'{track_def}'] = float('{:.5f}'.format(float(mst_data[1])))
+				if max_sdev_otn < float(mst_data[1]) or max_sdev_otn == 0:
+					max_sdev_otn = float(mst_data[1])
 			# поиск макс в R и T и ввод данных в словарь
 			else:
-				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"][f'{track_def}'] = float('{:.5f}'.format(float(array[1])))
-				if max_sdev_abs < float(array[1]) or max_sdev_abs == 0:
-					max_sdev_abs = float(array[1])
+				atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"][f'{track_def}'] = float('{:.5f}'.format(float(mst_data[1])))
+				if max_sdev_abs < float(mst_data[1]) or max_sdev_abs == 0:
+					max_sdev_abs = float(mst_data[1])
 				
 	#присвоение максимумов
 	atthenuator["atthenuator"][f'{attenuator}']["IF"][f'{int(ifbw/1000)}']["trace"]["absolute"]['max_value'] = float('{:.5f}'.format(max_sdev_abs))
@@ -115,11 +115,11 @@ write(CMT, f'SYST:PRES')
 	
 """ выполнение (; 0_0 0_Q ZVO"""				
 algoritm(10,HzConvertor(300,"kHz"))
-"""algoritm(10,HzConvertor(3,"kHz"))
+algoritm(10,HzConvertor(3,"kHz"))
 algoritm(30,HzConvertor(300,"kHz"))
 algoritm(30,HzConvertor(3,"kHz"))
 algoritm(50,HzConvertor(300,"kHz"))
-algoritm(50,HzConvertor(3,"kHz"))"""
+algoritm(50,HzConvertor(3,"kHz"))
 
 #удаление шаблона
 for keys in atthenuator["atthenuator"].keys():
