@@ -10,11 +10,8 @@ import time
 import json
 from connect import SNVNAopen, write, query, query_ascii_values, HzConvertor, singlescan
 
-
 #кол-во портов
-c = 3
-
-			
+c = int(input("Введите кол-во портов "))
 
 #алгоритм вычеслений СКО
 def algoritm(attenuator,ifbw):
@@ -101,11 +98,18 @@ atthenuator = {"atthenuator": {
         }
 	}
 }}
+
 #Подключаемся к SNVNA
 CMT = SNVNAopen()
 
 #Пресет
 write(CMT, f'SYST:PRES')
+
+#Проверка кол-ва портов
+if int(query(CMT,f'SERV:PORT:COUN?')) < c:
+	print(f'Кол-во портов превышано\nЕсли хотите больше - смените прибор, в данный момент выставлено максимальное кол-во портов: {query(CMT,"SERV:PORT:COUN?")}')
+	c = int(query(CMT,f'SERV:PORT:COUN?'))
+
 	
 """ выполнение (; 0_0 0_Q ZVO"""
 # список проверяемых аттенюаторов и фильтров ПЧ 
