@@ -1,0 +1,7 @@
+[IFBW]
+IFBW = 10
+[range]
+1_start = 1000
+1_stop = 2000
+2_start = 3000
+2_stop = 4000
