@@ -4,14 +4,14 @@ from connect import SNVNAopen, write, query, query_ascii_values, HzConvertor, si
 data = {}
 
 #открываем файл и загружаем данные
-with open('p-p_result.json', 'r', encoding='utf-8') as fh: 
+with open('freq_test.json', 'r', encoding='utf-8') as fh:
     data.update(json.load(fh))
-print(data)
+
 #ввод допуска
-dop_abs = 5
-dop_otn = 6
-#dop_abs = float(input("Введите значение допуска abs "))
-#dop_otn = float(input("Введите значение допуска otn "))
+#dop_abs = 5
+#dop_otn = 6
+dop_abs = float(input("Введите значение допуска abs "))
+dop_otn = float(input("Введите значение допуска otn "))
 #создаем строку для ввода в html страницу
 htmlstr = "<!-- Bootstrap CSS -->\
     <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css' integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T' crossorigin='anonymous'>\
@@ -25,16 +25,14 @@ th, td {\
 }\
     </style>\
 "
+
 htmlstr +="<table border='1' ><tr><td> Время запуска </td><td>  device </td><td> model </td><td> serial </td><td>  version </td></tr><tr>"
 for i in data["inf"].keys():
     htmlstr +=f'<td>{data["inf"][i]}</td>'
 
-
-
-
 htmlstr +="<table border='1' ><tr><td> Диапазон </td>"
 #Цикл для заолнения html страницы
-print(list(data.keys()))
+
 for i in list(data.keys()):
     if i == "S11":
         break
