@@ -118,8 +118,8 @@ def start_frequency_test(conf_data):
 
                     write(CMT, f'CALC1:TRAC:MARK1:STAT ON')
                     write(CMT, f'CALC1:TRAC:MARK2:STAT ON')
-                    write(CMT, f'CALC1:MARK1:X {start}')
                     write(CMT, f'CALC1:MARK2:X {stop}')
+                    write(CMT, f'CALC1:MARK1:X {start}')
                     write(CMT, f'CALC1:MST ON')
                     write(CMT, f'CALC1:MST:DOM ON')
 
@@ -165,8 +165,8 @@ def start_frequency_test(conf_data):
                             write(CMT, f'CALC:PAR{n_trace}:SEL')
                             write(CMT, f'CALC1:TRAC{n_trace}:MARK1:STAT ON')
                             write(CMT, f'CALC1:TRAC{n_trace}:MARK2:STAT ON')
-                            write(CMT, f'CALC1:MARK1:X {start}')
                             write(CMT, f'CALC1:MARK2:X {stop}')
+                            write(CMT, f'CALC1:MARK1:X {start}')
                             write(CMT, f'CALC1:MST ON')
                             write(CMT, f'CALC1:MST:DOM ON')
 
