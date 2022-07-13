@@ -1,7 +1,7 @@
 [IFBW]
 IFBW = 10
 [range]
-1_start = 1 GHz
-1_stop = 2 GHz
-2_start = 3 GHz
-2_stop = 4 GHz
+v = 2 GHz-3 GHz, 4 GHz-5 GHz
+[DOP]
+dop_abs = 0.0036514321658435213
+dop_otn = 0.0000845313546251354
