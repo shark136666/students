@@ -77,16 +77,16 @@ def start_frequency_test(conf_data):
     #Подключаемся к SNVNA
     k = 1
     """ ввод колличества потоков """
-    tracc_count = 2
-    if int(query(CMT,f'SERV:PORT:COUN?')) < tracc_count:
-            tracc_count = int(query(CMT,f'SERV:PORT:COUN?'))
-            print("Количество потоков превышено, установлено максимальное возможное значение: ", tracc_count)
+    tracc_count = int(query(CMT,f'SERV:PORT:COUN?'))
     param(conf_data)
     double_point()
     config = configparser.ConfigParser()
     config.read_file(open(r'config.txt'))
     #цикл вывода otn
-
+    start_data = 0
+    stop_data = 0
+    stop = 0
+    start = 0
     general_range1 = config["range"]['v'].split(", ")
     for keys in range(0, len(general_range1)):
             range1 = general_range1[int(f'{keys}')].split("-")
@@ -102,7 +102,10 @@ def start_frequency_test(conf_data):
             write(CMT, f'CALC1:PAR1:DEF S{canal}{canal}')
             singlescan(CMT)
             #--------------------
-
+            start_data = 0
+            stop_data = 0
+            stop = 0
+            start = 0
             general_range1 = config["range"]['v'].split(", ")
             for keys in range(0, len(general_range1)):
                     range1 = general_range1[int(f'{keys}')].split("-")
@@ -134,6 +137,7 @@ def start_frequency_test(conf_data):
             k = 1
 
     #цикл вывода abs
+
     for canal in range(1,tracc_count+1):
             #создание 3 трасс
             write(CMT, f'CALC1:PAR:COUN 2')
@@ -143,8 +147,13 @@ def start_frequency_test(conf_data):
             write(CMT, f'CALC1:PAR2:SPOR {canal}')
             singlescan(CMT)
             #--------------------
+
             general_range1 = config["range"]['v'].split(", ")
             for keys in range(0,len(general_range1)):
+                    start_data = 0
+                    stop_data = 0
+                    stop = 0
+                    start = 0
                     range1 = general_range1[int(f'{keys}')].split("-")
                     range_start = range1[0].split(" ")
                     range_stop = range1[1].split(" ")
@@ -213,7 +222,14 @@ def table_generator():
             break
         if i != "inf":
             htmlstr += f'<td colspan="3">{i}</td>'
-    htmlstr += "</tr> <tr><td>Трассы</td>  <td>Нер-ть,дБ</td>  <td>Макс.дБ</td>    <td>Допуск,дБ</td> <td>Нер-ть,дБ</td>  <td>Макс.дБ</td>    <td>Допуск,дБ</td></tr><tr>"
+
+    htmlstr += "</tr> <tr><td>Трассы</td>"
+    for i in list(data.keys()):
+        if i == "S11":
+            break
+        if i != "inf":
+            htmlstr += " <td>Нер-ть,дБ</td>  <td>Макс.дБ</td>    <td>Допуск,дБ</td>"
+    htmlstr += "<tr>"
     k = 0
     for trace in data.keys():
         if trace == "S11" or k == 3:
@@ -227,7 +243,7 @@ def table_generator():
                         htmlstr += f'<td>{value}</td> '
 
                         if value > dop_otn:
-                            htmlstr += f'<td class = bg-warning> {"{:0.6f}".format(value)} </td> <td class = bg-warning> {"{:0.6f}".format(dop_otn)} </td> '
+                            htmlstr += f'<td class = bg-warning> {"{:0.9f}".format(value)} </td> <td class = bg-warning> {"{:0.9f}".format(dop_otn)} </td> '
                         else:
                             htmlstr += f'<td> {"{:0.6f}".format(value)} </td> <td> {"{:0.6f}".format(dop_otn)} </td>'
                     else:
