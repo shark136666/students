@@ -1,0 +1,7 @@
+Так же установите https://callistoapp.bitbucket.io
+ознакомтесь с ним
+
+Изучите тесты и принцип взаимодействия с пользователем
+callisto.notebooks\content\devices\Factory_test
+
+callisto.notebooks\content\pymodules\connect_device_v2
