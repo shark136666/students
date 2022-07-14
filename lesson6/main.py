@@ -63,7 +63,9 @@ def double_point():
 #Функция проведения тестов и записи в json
 
 def start_frequency_test(conf_data):
+
     #date_inf = query(CMT,f'SYST:DATE?') эта команда не работает
+    
     time_inf = query(CMT,f'SYST:TIME?')
     idn_inf = list(query(CMT,f'*IDN?'))
     idn_inf = "".join(idn_inf).split(", ")
@@ -73,7 +75,7 @@ def start_frequency_test(conf_data):
     jsondict["inf"].update({"model":f'{idn_inf[1]}'})
     jsondict["inf"].update({"serial":f'{idn_inf[2]}'})
     jsondict["inf"].update({"version":f'{idn_inf[3]}'})
-
+    
     #Подключаемся к SNVNA
     k = 1
     """ ввод колличества потоков """
@@ -95,93 +97,68 @@ def start_frequency_test(conf_data):
             jsondict.update({f'{start_data} - {stop_data}': {}})
             jsondict[f'{start_data} - {stop_data}'].update({'max_abs': 0.0, 'max_otn': 0.0})
 
+    """ создание и росчерк трасс """
+    
 
-    for canal in range(1,tracc_count+1):
-            #создание 3 трасс
-            write(CMT, f'CALC1:PAR:COUN 1')
-            write(CMT, f'CALC1:PAR1:DEF S{canal}{canal}')
+    write(CMT, f'CALC1:PAR:COUN {tracc_count}')
+    
+    """ ----------------------------"""
+    
+    general_range1 = config["range"]['v'].split(", ")
+    for i in range(0,3):
+        if i == 0 :
+            for canal in range(1,int(f'{tracc_count}')+1): 
+                write(CMT, f'CALC1:PAR{canal}:DEF S{canal}{canal}')
             singlescan(CMT)
-            #--------------------
-            start_data = 0
-            stop_data = 0
-            stop = 0
-            start = 0
-            general_range1 = config["range"]['v'].split(", ")
-            for keys in range(0, len(general_range1)):
-                    range1 = general_range1[int(f'{keys}')].split("-")
-                    range_start = range1[0].split(" ")
-                    range_stop = range1[1].split(" ")
-                    start = HzConvertor(int(range_start[0]), range_start[1])
-                    stop = HzConvertor(int(range_stop[0]), range_stop[1])
-                    start_data = range1[0]
-                    stop_data = range1[1]
+        elif i == 1:
+            for canal in range(1,int(f'{tracc_count}')+1): 
+                write(CMT, f'CALC1:PAR{canal}:DEF R{canal}')
+                write(CMT, f'CALC1:PAR{canal}:SPOR {canal}')          
+        else:
+            for canal in range(1,int(f'{tracc_count}')+1): 
+                write(CMT, f'CALC1:PAR{canal}:DEF T{canal}')
+                write(CMT, f'CALC1:PAR{canal}:SPOR {canal}') 
+        for canal in range(1,int(f'{tracc_count}')+1):#S11,S22
+            for keys in range(0,len(general_range1)):#0,1
 
-                    write(CMT, f'CALC1:TRAC:MARK1:STAT ON')
-                    write(CMT, f'CALC1:TRAC:MARK2:STAT ON')
-                    write(CMT, f'CALC1:MARK2:X {stop}')
-                    write(CMT, f'CALC1:MARK1:X {start}')
-                    write(CMT, f'CALC1:MST ON')
-                    write(CMT, f'CALC1:MST:DOM ON')
+                range1 = general_range1[int(f'{keys}')].split("-")
+                range_start = range1[0].split(" ")
+                range_stop = range1[1].split(" ")
+                start = HzConvertor(int (range_start[0]),range_start[1])
+                stop = HzConvertor(int (range_stop[0]),range_stop[1])
+                start_data = range1[0]
+                stop_data = range1 [1]
+                
+                write(CMT, f'CALC:PAR{canal}:SEL')
+                write(CMT, f'CALC1:TRAC{canal}:MARK1:STAT ON')
+                write(CMT, f'CALC1:TRAC{canal}:MARK2:STAT ON')
 
-                    mst_data = query_ascii_values(CMT,f'CALC:MST:DATA?')
-                    trace = query(CMT, f'CALC1:PAR:DEF?')
-                    if k < 2 :
-                            jsondict.update({f'{trace}': {}})
-                            k += 1
-                    jsondict[f'{trace}'].update({f'{start_data} - {stop_data}':{}})
+                write(CMT, f'CALC1:MST ON')
+                write(CMT, f'CALC1:MST:DOM ON')
+                        
+                write(CMT, f'CALC1:MARK2:X {stop}')
+                write(CMT, f'CALC1:MARK1:X {start}')
 
+    
+                mst_data = query_ascii_values(CMT,f'CALC:MST:DATA?')
+
+                trace = query(CMT, f'CALC1:PAR{canal}:DEF?')
+                if k < 2 :
+                        jsondict.update({f'{trace}': {}})
+                        k += 1
+                jsondict[f'{trace}'].update({f'{start_data} - {stop_data}':{}})
+                jsondict[f'{trace}'][f'{start_data} - {stop_data}'].update({'Value':mst_data[2]})
+
+                if i == 0:
                     if mst_data[2] > jsondict[f'{start_data} - {stop_data}']["max_otn"] or jsondict[f'{start_data} - {stop_data}']["max_otn"] == 0.0 :
-                            jsondict[f'{start_data} - {stop_data}'].update({"max_otn" : mst_data[2]})
-                    jsondict[f'{trace}'][f'{start_data} - {stop_data}'].update({'Value':mst_data[2]})
-
+                           jsondict[f'{start_data} - {stop_data}'].update({"max_otn" : mst_data[2]})
+                else:
+                    if mst_data[2] > jsondict[f'{start_data} - {stop_data}']["max_abs"] or jsondict[f'{start_data} - {stop_data}']["max_abs"] == 0.0 :
+                           jsondict[f'{start_data} - {stop_data}'].update({"max_abs" : mst_data[2]})
+                
+    
             k = 1
-
-    #цикл вывода abs
-
-    for canal in range(1,tracc_count+1):
-            #создание 3 трасс
-            write(CMT, f'CALC1:PAR:COUN 2')
-            write(CMT, f'CALC1:PAR1:DEF R{canal}')
-            write(CMT, f'CALC1:PAR1:SPOR {canal}')
-            write(CMT, f'CALC1:PAR2:DEF T{canal}')
-            write(CMT, f'CALC1:PAR2:SPOR {canal}')
-            singlescan(CMT)
-            #--------------------
-
-            general_range1 = config["range"]['v'].split(", ")
-            for keys in range(0,len(general_range1)):
-                    start_data = 0
-                    stop_data = 0
-                    stop = 0
-                    start = 0
-                    range1 = general_range1[int(f'{keys}')].split("-")
-                    range_start = range1[0].split(" ")
-                    range_stop = range1[1].split(" ")
-                    start = HzConvertor(int (range_start[0]),range_start[1])
-                    stop = HzConvertor(int (range_stop[0]),range_stop[1])
-                    start_data = range1[0]
-                    stop_data = range1 [1]
-                    for n_trace in range(1,3):
-                            write(CMT, f'CALC:PAR{n_trace}:SEL')
-                            write(CMT, f'CALC1:TRAC{n_trace}:MARK1:STAT ON')
-                            write(CMT, f'CALC1:TRAC{n_trace}:MARK2:STAT ON')
-                            write(CMT, f'CALC1:MARK2:X {stop}')
-                            write(CMT, f'CALC1:MARK1:X {start}')
-                            write(CMT, f'CALC1:MST ON')
-                            write(CMT, f'CALC1:MST:DOM ON')
-
-                            mst_data = query_ascii_values(CMT,f'CALC:MST:DATA?')
-                            trace = query(CMT, f'CALC1:PAR{n_trace}:DEF?')
-                            if k < 3 :
-                                    jsondict.update({f'{trace}': {}})
-                                    k += 1
-                            jsondict[f'{trace}'].update({f'{start_data} - {stop_data}':{}})
-                            if mst_data[2] > jsondict[f'{start_data} - {stop_data}']["max_abs"] or jsondict[f'{start_data} - {stop_data}']["max_abs"] == 0.0 :
-                                    jsondict[f'{start_data} - {stop_data}'].update({"max_abs" : mst_data[2]})
-                            jsondict[f'{trace}'][f'{start_data} - {stop_data}'].update({'Value':mst_data[2]})
-
-            k = 1
-
+            
 def table_generator():
     # создаем словарь для записи с json
     data = {}
@@ -262,9 +239,10 @@ def table_generator():
             htmlstr += "</tr><tr>"
     with open('html_table.html', 'w', encoding='utf-8') as fh1:
         fh1.write(htmlstr)
-
+print(query(CMT,f'SYST:TIME?'))
 readconfig()
 start_frequency_test(conf_data)
 with open("freq_test.json", "w") as write_file:
     json.dump(jsondict, write_file, indent=2)
 table_generator()
+print(query(CMT,f'SYST:TIME?'))
