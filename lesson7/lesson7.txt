@@ -5,3 +5,19 @@
 callisto.notebooks\content\devices\Factory_test
 
 callisto.notebooks\content\pymodules\connect_device_v2
+
+
+Задание 
+В папке callisto.notebooks\content\devices\Factory_test
+создайте папку students_[test_name] и используя раннее сделаные алгоритмы для 
+тестов реализуйте их с использованием jupyter
+1)тест СКО - Саша и Паша
+2) тест АЧХ - Альбина
+
+В тесте должен быть вывод результатов html таблица
+должно быть сохранение таблицы в файл(по анологии с тестами которые там уже имеются)
+
+Как проверять финальную версию?
+Копируйте папку с вашим тестом в папку с установленной Callisto Local\Callisto\notebooks\devices\Factory_test
+
+запускайте калисту и проверяйте свое решение, чтобы пользователя провело по шагам.
