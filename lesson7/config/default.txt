@@ -1,0 +1,7 @@
+[IFBW]
+IFBW = 10
+[range]
+v = 300 kHz-3 GHz, 3 GHz-4 GHz, 5 GHz-6 GHz, 6 GHz-7 GHz, 7 GHz-8 GHz, 8 GHz-9 GHz
+[DOP]
+dop_abs = 0.0036514321658435213
+dop_otn = 0.0000845313546251354
