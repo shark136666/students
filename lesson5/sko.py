@@ -1,6 +1,6 @@
 import pyvisa
 from commands import one_scan, HZ_convert
-
+import json
 # Подключение к SNVNA
 rm = pyvisa.ResourceManager('@py')
 # Connect to a Socket on the local machine at 5025
@@ -107,23 +107,58 @@ for i in [10, 30, 50]:      # Алгоритм для ПЧ 300 и 3 кГц, ат
         math_stats.append(math_stat)
         # print(f"for att = {i} and bwid = {j}")
         # print(math_stat)
-for i in math_stats:
-    print(i)
-print(f'sko otn max {sko_otn_max}')
-print(f'sko abs max {sko_abs_max}')
 
 
+math_result = []    # Для совмещения массивов S11 + S22 + S33, T11 + T22.....
+if trace_num != 1:
+    for j in range(6):
+        math1 = [] # S
+        math2 = [] # T
+        math3 = [] # R
+        for i in range(trace_num):
+            math1 += math_stats[j][i*3]
+            math2 += math_stats[j][(i*3) + 1]
+            math3 += math_stats[j][(i*3) + 2]
+        arr = [math1, math2, math3]
+        math_result.append(arr)
+else:
+    math_result = math_stats
 
-# кол-во трасс = порты * 3 (S, T, R) * 6 (10-300,10-3,30-300...)
-# # Создание трасс
-#     write(CMT, f'CALC1:PAR:COUN {trace_count}')
-#     for i in range(trace_count):
-#         params = ['S', 'T', 'R']
-#         # T, R
-#         if i%3 != 0:
-#             write(CMT, f'CALC1:PAR{i + 1}:DEF {params[i % 3]}{(i // 3) + 1}')
-#             # установка порта-источника
-#             write(CMT, f'CALC1:PAR{i+1}:SPOR {(i//3) + 1}')
-#         # S
-#         else:
-#             write(CMT, f'CALC1:PAR{i + 1}:DEF {params[i%3]}{(i // 3) + 1}{(i // 3) + 1}')
+
+def list_to_dict(arr, ports, param):    # Перевод arr в dict
+    dict = {'max_value':0}
+    params = []
+    for i in range(ports):
+        params.append(arr[1+(i*3)])
+        dict.update({f'{param}{i+1}{i+1}': params[i]})
+    dict['max_value'] = max(params)
+    return dict
+
+
+Dictionar={}
+
+Tune_value={10:Dictionar,30:Dictionar,50:Dictionar}
+
+# result["atthenuator"]["Tune_value"]["IF"]["PCH_value"]["trace"]["absolute"].update(value)
+# result["atthenuator"]["Tune_value"]["IF"]["PCH_value"]["trace"]["otnosit"].update(value1)
+
+result = {"atthenuator":{}}
+mass = [10,30,50]
+iff = [300,3]
+count = 0 # от 0 до 5
+for i in mass:
+    result["atthenuator"][f'{i}'] = {'IF':{}}
+    for j in iff:
+        value_otn = list_to_dict(math_result[count][0], trace_num, 'S')
+        value_t = list_to_dict(math_result[count][1], trace_num, 'T')
+        value_r = list_to_dict(math_result[count][2], trace_num, 'R')
+        count += 1
+        value_abs = value_r | value_t
+        result["atthenuator"][f'{i}']['IF'][f'{j}']={'trace':{"absolute":{},"otnosit":{}}}
+        result["atthenuator"][f'{i}']["IF"][f'{j}']["trace"]["absolute"].update(value_abs)
+        result["atthenuator"][f'{i}']["IF"][f'{j}']["trace"]["otnosit"].update(value_otn)
+json_data=json.dumps(result, indent=4)
+print(json_data)
+json = open('sko_result.json', 'w')
+json.write(json_data)
+json.close()
