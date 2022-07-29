@@ -55,6 +55,9 @@ def port_query():
         error = query(CMT, 'SYST:ERR?')
         if error == '-110, Command header error':
             return port_count - 1
+        elif error != '0, No error':
+            print(error)
+            print(f'CALC1:PAR1:DEF S{port_count}1')
 
 
 # установка трасс
