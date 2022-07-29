@@ -45,6 +45,17 @@ def query(inst, command):
 def write(inst, command):
     inst.write(command)
 
+# костыль для определения количества портов
+def port_query():
+    port_count = 0
+    write(CMT, f'CALC1:PAR:COUN 1')
+    while True:
+        port_count += 1
+        CMT.write(f'CALC1:PAR1:DEF S{port_count}1')
+        error = query(CMT, 'SYST:ERR?')
+        if error == '-110, Command header error':
+            return port_count - 1
+
 
 # установка трасс
 def sko_algorithm(trace_count, bwid, att):
@@ -88,25 +99,14 @@ def sko_algorithm(trace_count, bwid, att):
         math_stat.append(query(CMT, f'CALC1:MST:DATA?').split(','))
     return math_stat
 
-
-sko_abs_max = 0     # максимальный абсолютный ско
-sko_otn_max = 0     # относительный
-trace_num = int(input('Введите количество портов'))       # последний порядковый номер трассы
-while(trace_num>16 or trace_num < 1):
-    print('Некорректное число портов, введите число от 1 до 16')
-    trace_num = int(input('Введите количество портов'))
+# костыль для количества портов
+# trace_num = int(query(CMT, '*IDN?')[query(CMT, '*IDN?').find('SN5090')+7] + query(CMT, '*IDN?')[query(CMT, '*IDN?').find('SN5090')+8])       # последний порядковый номер трассы
+trace_num = port_query()
 math_stats = []
 for i in [10, 30, 50]:      # Алгоритм для ПЧ 300 и 3 кГц, аттенюатора 10, 30, 50 дБ
     for j in [300, 3]:
         math_stat = sko_algorithm(trace_num, j, i)
-        for k in range(trace_num*3):    # Проверка на макс. ско
-            if (float(math_stat[k][1]) > sko_otn_max) and (k % 3 == 0):
-                sko_otn_max = float(math_stat[k][1])
-            elif (float(math_stat[k][1]) > sko_abs_max) and (k % 3 != 0):
-                sko_abs_max = float(math_stat[k][1])
         math_stats.append(math_stat)
-        # print(f"for att = {i} and bwid = {j}")
-        # print(math_stat)
 
 
 math_result = []    # Для совмещения массивов S11 + S22 + S33, T11 + T22.....
