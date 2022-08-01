@@ -1,11 +1,11 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QStringListModel>
+#include <QQuickView>
 #include <QQmlContext>
 #include <QSettings>
 #include <iostream>
 #include <client.h>
-
 
 using namespace std;
 
@@ -17,6 +17,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QGuiApplication app(argc, argv);
+    app.setWindowIcon(QIcon("favicon.png"));
+    //были предупреждения, эти строчки исправили
+    app.setOrganizationName("Planar");
+    app.setOrganizationDomain("planarchel.ru");
+    app.setApplicationName("SocketTester_2.0");
 
     //считывание команд из конфига
     QSettings settings("config.ini", QSettings::IniFormat);
@@ -27,8 +32,8 @@ int main(int argc, char *argv[])
         commandList << "";
 
     //считывание адресса и порта из конфига
-    QString port = settings.value("port").toString();
     QString address = settings.value("address").toString();
+    int port = settings.value("port").toInt();
 
 
     QQmlApplicationEngine engine;
@@ -39,20 +44,11 @@ int main(int argc, char *argv[])
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
 
-
-    //добавление обработчика отправки команды
+    //добавление клиента в контекст
     Client client;
     client.setPort(port);
     client.setAddress(address);
-
     engine.rootContext()->setContextProperty("client", &client);
-
-    //создание модели логов
-    QStringListModel logModel;
-    QStringList logValues;
-    logValues << "log 1" << "log 2" << "log 3" << "log 4";
-    logModel.setStringList(logValues);
-    engine.rootContext()->setContextProperty("logModel", &logModel);
 
     //создание модели комманд
     QStringListModel commandModel;

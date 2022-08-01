@@ -2,10 +2,8 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>ConnectForm.qml</file>
-        <file>CommandForm.qml</file>
         <file>CommandsModel.qml</file>
         <file>CommandListItem.qml</file>
-        <file>LogModel.qml</file>
         <file>LogListItem.qml</file>
     </qresource>
 </RCC>

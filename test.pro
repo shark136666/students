@@ -3,6 +3,8 @@ QT += quick
 QT += qml
 QT += widgets
 QT += core
+QT += network
+win32:RC_ICONS += settings.ico
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
