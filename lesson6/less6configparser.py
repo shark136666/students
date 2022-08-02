@@ -1,4 +1,10 @@
 from ctypes.wintypes import PPOINT
+from inspect import trace
+from itertools import count
+from multiprocessing import Array
+from re import T
+from textwrap import indent
+from typing import Counter
 import pyvisa
 import json
 import configparser
@@ -94,22 +100,25 @@ write(CMT, 'SERVice:RFCTL:POWer:ATT 10')
 write(CMT, f'SENS1:BWID {Convertor(10,"kHz")}')
 write(CMT, 'SERV:RFCTL:POW:DAC 6554')
 write(CMT, 'SERVice:SWEep:FREQuency:FACTory')
-
+trace_count=int(query(CMT, f'SERV:PORT:COUNT?'))
 b = query(CMT, 'SENS1:SEGM:DATA?').split(',')
 arr_start_mark = []
 arr_end_mark = []
-pparray=[]
-pparray1=[]
+pparray=[[0] * len(arr_end_mark) for i in range(trace_count*3)]
+# print(len(arr_end_mark))
+pparray1=[[0] * len(arr_end_mark1) for i in range(trace_count*3)]
 for i in range(9, len(b), 6):
     b[i] = str(int(b[i]) * 2)   # домножение точек на 2
     arr_end_mark.append(b[i - 1])   # начальные координаты марки
     arr_start_mark.append(b[i - 2])     # конечные
 upd_array = ','.join(b)
 write(CMT, f'SENS1:SEGM:DATA {upd_array}')
+d=0
+pparray=[[0] * len(arr_end_mark) for i in range(trace_count*3)]
+# print(len(arr_end_mark))
 # print(b)
 # print(arr_start_mark)
 # print(arr_end_mark)
-trace_count=int(query(CMT, f'SERV:PORT:COUNT?'))
 write(CMT, f'CALC1:PAR:COUN 1')
 for i in range(trace_count*3):
     params = ['S', 'T', 'R']
@@ -122,7 +131,7 @@ for i in range(trace_count*3):
     else:
         write(CMT, f'CALC1:PAR1:DEF {params[i%3]}{(i // 3) + 1}{(i // 3) + 1}')
     one_scan(1)
-    for j in range(len(arr_end_mark1)): #CONFIG
+    for j in range(len(arr_end_mark1)):#CFG
         CMT.write(f'CALC1:MARK1:STAT ON')
         CMT.write(f'CALC1:MARK2:STAT ON')
         CMT.write(f'CALC1:MST ON')
@@ -131,7 +140,7 @@ for i in range(trace_count*3):
         CMT.write(f'CALC1:MARK2:X {arr_end_mark1[j]}')
         mst_data=CMT.query(f'CALC1:MST:DATA?')
         array = mst_data.split(',')
-        pparray.append(array[2])
+        pparray1[i][j]=format(float(array[2]), '.8f')
         CMT.write(f'CALC1:MARK1:STAT OFF')
         CMT.write(f'CALC1:MARK2:STAT OFF')
         CMT.write(f'CALC1:MST OFF')
@@ -145,58 +154,64 @@ for i in range(trace_count*3):
         CMT.write(f'CALC1:MARK2:X {arr_end_mark[j]}')
         mst_data=CMT.query(f'CALC1:MST:DATA?')
         array = mst_data.split(',')
-        pparray1.append(array[2])
+        pparray[i][j]=format(float(array[2]), '.8f')
         CMT.write(f'CALC1:MARK1:STAT OFF')
         CMT.write(f'CALC1:MARK2:STAT OFF')
         CMT.write(f'CALC1:MST OFF')
         CMT.write(f'CALC1:MST:DOM OFF')
 
-S=["%.8f" % float(S) for S in pparray1[0:-1:]]
-segDiap1 = S[0:-1:]
-print(pparray1)
-print("asdasdasd")
-print(segDiap1)
-T=["%.8f" % float(T) for T in pparray1[1:-1:3]]
-R=["%.8f" % float(R) for R in pparray1[2:-1:3]]
+S1=pparray1[0:-1:3]
 
-S1=["%.8f" % float(S1) for S1 in pparray[0:-1:3]]
-T1=["%.8f" % float(T1) for T1 in pparray[1:-1:3]]
-R1=["%.8f" % float(R1) for R1 in pparray[2:-1:3]]
-print(len(S))
-print(len(T))
-print(len(R))
-print(len(S1))
-print(len(T1))
-print(len(R1))
-result = {"segment":{}}
+T1=pparray1[1:-1:3]
+R1=pparray1[2:-2:3]
+R1.append(pparray1[(trace_count*3)-1])
+
+S=pparray[0:-1:3]
+T=pparray[1:-1:3]
+R=pparray[2:-1:3]
+print(max(max(S1)))
+print(max(max(T1)))
+print(max(max(R1)))
+# print(max(max(S1)))
+# print(max(max(T1)))
+# print(max(max(R1)))
+
 str_array=[]
-print(S)
-print(S)
-print(S)
+str_array1=[]
+print(pparray1)
+print(S1)
+print(T1)
+print(R1)
+Cfg_dict={"segment":{}}
+Seg_dict={"segment":{}}
 
 for i in range(len(arr_end_mark)):
     str_array.append(AntiConvertor(arr_start_mark[i])+' '+AntiConvertor(arr_end_mark[i]))
-
-segments =config['range']['ranges'].split(',')+str_array
-print(list_to_dict(S,trace_count,'S'))
-print(list_to_dict(T,trace_count,'T'))
-print(list_to_dict(R,trace_count,'R'))
-print(list_to_dict(S1,trace_count,'S'))
-print(list_to_dict(T1,trace_count,'T'))
-print(list_to_dict(R1,trace_count,'R'))
-value = {"max_value":25, "S11":23, "S22":17, "S33":7, "S44":25}
-value1 = {"max_value":11,"R11":11, "R22":1, "R33":3, "R44":8, "T11":6, "T22":2, "T33":4, "T44":9}
-# result["segment"]["segment_range"]["trace"]["absolute"].update(value)
-# result["segment"]["segment_range"]["trace"]["otnosit"].update(value1)
-
-for i in segments:
-    result["segment"][f'{i}'] = {'trace':{"absolute":{},"otnosit":{}}}
-    result["segment"][f'{i}']["trace"]["absolute"].update(value1)
-    #result["segment"][f'{i}']["trace"]["otnosit"]={f'S{i}{i}': f'{S[]}'}
-
-json_data=json.dumps(result, indent=4)
-print(json_data)
-json = open('freq_test.json', 'w')
-json.write(json_data)
-json.close()
-print(R)
+for i in range(len(arr_end_mark1)):
+    str_array1.append(AntiConvertor(arr_start_mark1[i])+' '+AntiConvertor(arr_end_mark1[i]))
+print(str_array)
+print(str_array1)
+# value = {"max_value":25, "S11":23, "S22":17, "S33":7, "S44":25}
+# value1 = {"max_value":11,"R11":11, "R22":1, "R33":3, "R44":8, "T11":6, "T22":2, "T33":4, "T44":9}
+# # result["segment"]["segment_range"]["trace"]["absolute"].update(value)
+# # result["segment"]["segment_range"]["trace"]["otnosit"].update(value1)
+counter=0
+for i in str_array1:
+    for j in range (0,trace_count):
+        Cfg_dict["segment"][f'{i}'] = {'trace':{"absolute":{},"otnosit":{}}}
+        #Cfg_dict["segment"][f'{i}']["trace"]["absolute"].update({"max_value": max(max(S1))})
+        #Cfg_dict["segment"][f'{i}']["trace"]["otnosit"].update({"max_value": max(max(max(T1)),max(max(R1)))})
+        Cfg_dict["segment"][f'{i}']["trace"]["absolute"][f'S{j+1}{j+1}']= S1[counter][j]
+        Cfg_dict["segment"][f'{i}']["trace"]["otnosit"][f'T{j+1}{j+1}']= T1[counter][j]
+        Cfg_dict["segment"][f'{i}']["trace"]["otnosit"][f'R{j+1}{j+1}']= R1[counter][j]
+    if counter<trace_count:
+        counter+=1
+    else:
+        counter=0
+print(Cfg_dict)
+# json_data=json.dumps(result, indent=4)
+# print(json_data)
+# json = open('freq_test.json', 'w')
+# json.write(json_data)
+# json.close()
+# print(R)
