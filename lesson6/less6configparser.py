@@ -19,7 +19,6 @@ CMT.read_termination = '\n'
 CMT.timeout = 10000
 
 def setup_trace(CMT, port, traces,ranges):
-    write(CMT, f'CALC1:PAR:COUN 3')
     for trace in traces:
         if trace is "S":
             write(CMT, f'CALC1:PAR1:DEF {trace}{port}{port}')
@@ -55,7 +54,7 @@ def Convertor1(value:str):
     else: return print("Incorrect value")
 
 def AntiConvertor(number):
-    number1=float(format(float(number),'.2f'))
+    number1=int(number)
     # number1=str(number1)
     if (number1) < 1000000:
         return str(float(number1)/1000) + ' kHz'
@@ -104,7 +103,6 @@ def get_ranges(ranges):
         arr1 = arr[i].split('-')    
         result[i]['start'] = Convertor1(arr1[0])
         result[i]['stop'] = Convertor1(arr1[1])
-    print(f'resul = {result}')
     return result
 
 # функция однократного россчерка
@@ -146,25 +144,26 @@ def setup_markers(CMT,trace,ranges):
             # # ((key+1) * 2 ) stop
             CMT.write(f'CALC1:MARK{((key+1) * 2 ) - 1}:X {ranges[key]["start"]}')
             CMT.write(f'CALC1:MARK{((key+1) * 2 )}:X {ranges[key]["stop"]}')
-        mst_data=CMT.query(f'CALC1:MST:DATA?')
-        array = mst_data.split(',')
 
-def get_data(CMT,port,start,stop):
-    for i in range(1,3):
+
+def get_data(CMT,port,result,start,stop):
+
+    for i in range(1,4):
         CMT.write(f'CALC1:PAR{i}:SEL')
-        result = {}
-        for key in ranges.keys():
-            # ((key+1) * 2 ) - 1 start
-            # # ((key+1) * 2 ) stop
-            CMT.write(f'CALC1:MARK{((key+1) * 2 ) - 1}:FUNC:DOM:STAR {ranges[key]["start"]}')
-            CMT.write(f'CALC1:MARK{((key+1) * 2 )}:FUNC:DOM:STOP {ranges[key]["stop"]}')
-            mst_data=CMT.query(f'CALC1:MST:DATA?')
-            value = mst_data.split(',')[2]
-            value = format(float(value,'.8f'))
+   
+        CMT.write(f'CALC:MST:DOM:START {((key+1) * 2 ) - 1}')
+        CMT.write(f'CALC:MST:DOM:STOP {((key+1) * 2 )}')
+        mst_data=CMT.query(f'CALC1:MST:DATA?')
+        value = mst_data.split(',')
+        value = format(float(value[2]),'.8f')
+        if i is 1:
+                result['segment'][f'{start}-{stop}']['absolute'][f'S{port}{port}']=value
+        elif i is 2:
+                result['segment'][f'{start}-{stop}']['otnosit'][f'T{port}{port}']=value
+        else:
+                result['segment'][f'{start}-{stop}']['otnosit'][f'R{port}{port}']=value
+    return result
 
-            print(value)
-
-        #"trace":{"absolute":{},"otnosit":{}}
 
 
 
@@ -177,128 +176,39 @@ attenuator = config['options']['attenuator']
 traces = ['S','T','R']
 setup_chanel_parametrs(CMT,attenuator,IFBW)
 trace_count=int(query(CMT, f'SERV:PORT:COUNT?'))
+print(trace_count)
+write(CMT, f'CALC1:PAR:COUN 3')
+
 
 
 result={"segment":{}}
+for key in ranges.keys():
+    start = AntiConvertor(ranges[key]['start'])
+    stop = AntiConvertor(ranges[key]['stop'])
+    result['segment'][f'{start}-{stop}']={'absolute':{},'otnosit':{}}
+    result['segment'][f'{start}-{stop}']['absolute']={f"S{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
+    T={f"T{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
+    R={f"R{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
+    result['segment'][f'{start}-{stop}']['otnosit']={**T,**R}
+
 for port in range(1,trace_count+1):   
     setup_trace(CMT,port,traces,ranges)
     one_scan(CMT)
     for key in ranges.keys():
-        start = ranges[key]['start']
-        stop = ranges[key]['stop']
-        result['segment'][f'{start}-{stop}']={}
-        result[]
-        get_data(CMT,port,start,stop)
+        start = AntiConvertor(ranges[key]['start'])
+        stop = AntiConvertor(ranges[key]['stop'])
+        result=get_data(CMT,port,result,start,stop)
+for key in ranges.keys():
+    start = AntiConvertor(ranges[key]['start'])
+    stop = AntiConvertor(ranges[key]['stop'])
+    result['segment'][f'{start}-{stop}']['absolute']['max_abs']=max(result['segment'][f'{start}-{stop}']['absolute'].values())
+    result['segment'][f'{start}-{stop}']['otnosit']['max_diff']=max(result['segment'][f'{start}-{stop}']['otnosit'].values())
+
+json_data=json.dumps(result, indent=4)
+print(json_data)
+json = open('freq_test.json', 'w')
+json.write(json_data)
+json.close()
+print(R)
 
 
-    get_data(CMT,ranges,trace)
-
-
-
-
-# arr2=[]
-# arr_start_mark1 = []
-# arr_end_mark1 = []
-# for i in range(len(arr1)):
-#     arr2.append(arr1[i].split(' '))
-
-
-
-            
-
-
-
-
-# for i in range(len(arr2)):
-#     arr_start_mark1.append((Convertor(int(arr2[i][0]),arr2[i][1])))
-#     arr_end_mark1.append((Convertor(int(arr2[i][2]),arr2[i][3])))
-
-
-
-
-
-# trace_count=int(query(CMT, f'SERV:PORT:COUNT?'))
-
-
-
-# d=0
-# pparray=[[0] * len(arr_end_mark) for i in range(trace_count*3)]
-# # print(len(arr_end_mark))
-# # print(b)
-# # print(arr_start_mark)
-# # print(arr_end_mark)
-# write(CMT, f'CALC1:PAR:COUN 1')
-# for i in range(trace_count*3):
-#     params = ['S', 'T', 'R']
-#     # T, R
-#     if i%3 != 0:
-#         write(CMT, f'CALC1:PAR1:DEF {params[i % 3]}{(i // 3) + 1}')
-#         # установка порта-источника
-#         write(CMT, f'CALC1:PAR1:SPOR {(i//3) + 1}')
-#     # S
-#     else:
-#         write(CMT, f'CALC1:PAR1:DEF {params[i%3]}{(i // 3) + 1}{(i // 3) + 1}')
-#     one_scan(1)
-#     for j in range(len(arr_end_mark1)):#CFG
-#         CMT.write(f'CALC1:MARK1:STAT ON')
-#         CMT.write(f'CALC1:MARK2:STAT ON')
-#         CMT.write(f'CALC1:MST ON')
-#         CMT.write(f'CALC1:MST:DOM ON')
-#         CMT.write(f'CALC1:MARK1:X {arr_start_mark1[j]}')
-#         CMT.write(f'CALC1:MARK2:X {arr_end_mark1[j]}')
-#         mst_data=CMT.query(f'CALC1:MST:DATA?')
-#         array = mst_data.split(',')
-#         pparray1[i][j]=format(float(array[2]), '.8f')
-#         CMT.write(f'CALC1:MARK1:STAT OFF')
-#         CMT.write(f'CALC1:MARK2:STAT OFF')
-#         CMT.write(f'CALC1:MST OFF')
-#         CMT.write(f'CALC1:MST:DOM OFF')
-
-
-# S1=pparray1[0:-1:3]
-
-# T1=pparray1[1:-1:3]
-# R1=pparray1[2:-2:3]
-# R1.append(pparray1[(trace_count*3)-1])
-
-# S=pparray[0:-1:3]
-# T=pparray[1:-1:3]
-# R=pparray[2:-1:3]
-# print(max(max(S1)))
-# print(max(max(T1)))
-# print(max(max(R1)))
-# # print(max(max(S1)))
-# # print(max(max(T1)))
-# # print(max(max(R1)))
-
-# str_array=[]
-# str_array1=[]
-# print(pparray1)
-# print(S1)
-# print(T1)
-# print(R1)
-# Cfg_dict={"segment":{}}
-
-
-# for i in range(len(arr_end_mark1)):
-#     str_array1.append(AntiConvertor(arr_start_mark1[i])+' '+AntiConvertor(arr_end_mark1[i]))
-# counter=0
-# j=0
-# for i in str_array1:
-#     Cfg_dict["segment"][f'{i}'] = {'trace':{"absolute":{},"otnosit":{}}}
-#     Cfg_dict["segment"][f'{i}']["trace"]["absolute"]={f"S{j+1}{j+1}" : f"{S1[j][counter]}" for j in range (0,trace_count)}
-#     trace = f"T{j+1}{j+1}"
-#     print(trace)
-#     Cfg_dict["segment"][f'{i}']["trace"]["otnosit"][trace] = 1
-#     # Cfg_dict["segment"][f'{i}']["trace"]["otnosit"]={f"R{j+1}{j+1}" : f"{R1[j][counter]}" for j in range (0,trace_count)}
-#     if counter<trace_count:
-#         counter+=1
-#     else:
-#         counter=0
-# print(Cfg_dict)
-# json_data=json.dumps(Cfg_dict, indent=4)
-# print(json_data)
-# json = open('freq_test.json', 'w')
-# json.write(json_data)
-# json.close()
-# print(R)
