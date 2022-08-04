@@ -1,14 +1,8 @@
-from ctypes.wintypes import PPOINT
-from inspect import trace
-from itertools import count
-from multiprocessing import Array
-from re import T
-from textwrap import indent
-from typing import Counter
+import datetime
 import pyvisa
 import json
 import configparser
-
+from json2html import *
 rm = pyvisa.ResourceManager('@py')
 try:
     CMT = rm.open_resource('TCPIP0::localhost::5025::SOCKET')
@@ -164,10 +158,20 @@ def get_data(CMT,port,result,start,stop):
                 result['segment'][f'{start}-{stop}']['otnosit'][f'R{port}{port}']=value
     return result
 
+def dict_gen(result):
+    for key in ranges.keys():
+        start = AntiConvertor(ranges[key]['start'])
+        stop = AntiConvertor(ranges[key]['stop'])
+        result['segment'][f'{start}-{stop}']={'absolute':{},'otnosit':{}}
+        result['segment'][f'{start}-{stop}']['absolute']={f"S{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
+        T={f"T{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
+        R={f"R{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
+        result['segment'][f'{start}-{stop}']['otnosit']={**T,**R}
+    return result
 
 
 
-
+start_time = datetime.datetime.now()
 config = configparser.ConfigParser()
 config.read('config.cfg')
 ranges = get_ranges(config['range']['ranges'])
@@ -178,18 +182,10 @@ setup_chanel_parametrs(CMT,attenuator,IFBW)
 trace_count=int(query(CMT, f'SERV:PORT:COUNT?'))
 print(trace_count)
 write(CMT, f'CALC1:PAR:COUN 3')
+result=dict_gen(result={"segment":{}})
 
 
 
-result={"segment":{}}
-for key in ranges.keys():
-    start = AntiConvertor(ranges[key]['start'])
-    stop = AntiConvertor(ranges[key]['stop'])
-    result['segment'][f'{start}-{stop}']={'absolute':{},'otnosit':{}}
-    result['segment'][f'{start}-{stop}']['absolute']={f"S{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
-    T={f"T{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
-    R={f"R{j}{j}" : f"{0}" for j in range (1,trace_count+1)}
-    result['segment'][f'{start}-{stop}']['otnosit']={**T,**R}
 
 for port in range(1,trace_count+1):   
     setup_trace(CMT,port,traces,ranges)
@@ -204,11 +200,14 @@ for key in ranges.keys():
     result['segment'][f'{start}-{stop}']['absolute']['max_abs']=max(result['segment'][f'{start}-{stop}']['absolute'].values())
     result['segment'][f'{start}-{stop}']['otnosit']['max_diff']=max(result['segment'][f'{start}-{stop}']['otnosit'].values())
 
-json_data=json.dumps(result, indent=4)
-print(json_data)
-json = open('freq_test.json', 'w')
-json.write(json_data)
-json.close()
-print(R)
 
+# json_data=json.dumps(result, indent=4)
+#  print(json_data)
+# json = open('freq_test.json', 'w')
+# json.write(json_data)
+# json.close()
+
+perf_data=query(CMT,f'*IDN?').split(',')
+print(perf_data)
+print(start_time)
 
