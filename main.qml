@@ -5,11 +5,19 @@ import QtQuick.Controls 2.15
 
 Window {
     id: win
+    x: client.x
+    y: client.y
     minimumWidth: connectForm.width + 20
     minimumHeight: 680
     visible: true
     color: "#fff"
     title: qsTr("SocketTester_2.0")
+    onXChanged: {
+        client.x = win.x
+    }
+    onYChanged: {
+        client.y = win.y
+    }
 
     property int defMargin: 10
     property string outlineColor: "#00A1FA"

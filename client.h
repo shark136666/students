@@ -10,6 +10,8 @@ class Client : public QObject
     Q_PROPERTY(QString address READ address WRITE setAddress NOTIFY addressChanged)
     Q_PROPERTY(int port READ port WRITE setPort NOTIFY portChanged)
     Q_PROPERTY(bool isConnected READ isConnected NOTIFY isConnectedChanged)
+    Q_PROPERTY(int x READ x WRITE setX NOTIFY xChanged)
+    Q_PROPERTY(int y READ y WRITE setY NOTIFY yChanged)
 
 
 public:
@@ -23,6 +25,12 @@ public:
 
     bool isConnected()const;
     void setIsConnected(const bool &);
+
+    int x()const;
+    void setX(const int &);
+
+    int y()const;
+    void setY(const int &);
 
     Q_INVOKABLE void sendCommand(const QString& str);
     Q_INVOKABLE void doConnect();
@@ -38,6 +46,8 @@ signals:
     void addressChanged();
     void portChanged();
     void isConnectedChanged();
+    void xChanged();
+    void yChanged();
 
     void commandSent(QString);
     void dataRecieved(QString);
@@ -51,6 +61,8 @@ private:
     int mPort;
     bool mIsConnected;
     QString logString;
+    int mX;
+    int mY;
 };
 
 #endif // CLIENT_H

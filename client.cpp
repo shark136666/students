@@ -41,6 +41,28 @@ void Client::setIsConnected(const bool &value)
     emit isConnectedChanged();
 }
 
+int Client::x() const
+{
+    return mX;
+}
+
+void Client::setX(const int &value)
+{
+    mX = value;
+    emit xChanged();
+}
+
+int Client::y() const
+{
+    return mY;
+}
+
+void Client::setY(const int &value)
+{
+    mY = value;
+    emit yChanged();
+}
+
 void Client::doConnect()
 {
     if(mIsConnected){

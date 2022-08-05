@@ -23,8 +23,11 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain("planarchel.ru");
     app.setApplicationName("SocketTester_2.0");
 
-    //считывание команд из конфига
+    //считывание координат из конфига
     QSettings settings("config.ini", QSettings::IniFormat);
+    int x = settings.value("x").toInt();
+    int y = settings.value("y").toInt();
+    //считывание команд из конфига
     QStringList commandList = settings.value("commandList").toStringList();
 
     //добавление пустых ячеек если < 6
@@ -44,10 +47,15 @@ int main(int argc, char *argv[])
             QCoreApplication::exit(-1);
     }, Qt::QueuedConnection);
 
-    //добавление клиента в контекст
+    //добавление клиента в контекст и добавление конфига
     Client client;
+
     client.setPort(port);
     client.setAddress(address);
+
+    client.setX(x);
+    client.setY(y);
+
     engine.rootContext()->setContextProperty("client", &client);
 
     //создание модели комманд
@@ -59,6 +67,8 @@ int main(int argc, char *argv[])
 
     int res = app.exec();
     //сериализация команд
+    settings.setValue("x", client.x());
+    settings.setValue("y", client.y());
     settings.setValue("port", client.port());
     settings.setValue("address", client.address());
     settings.setValue("commandList", commandModel.stringList());
