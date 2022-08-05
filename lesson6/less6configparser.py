@@ -314,5 +314,6 @@ json = open('freq_test.json', 'w')
 json.write(json_data)
 json_html(result)
 # json.close()
+print(1)
 
 
