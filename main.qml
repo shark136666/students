@@ -5,18 +5,42 @@ import QtQuick.Controls 2.15
 
 Window {
     id: win
-    x: client.x
-    y: client.y
-    minimumWidth: connectForm.width + 20
-    minimumHeight: 680
+    width: client.width
+    height: client.height
+
     visible: true
     color: "#fff"
     title: qsTr("SocketTester_2.0")
+    x: client.x
+    y: client.y
+
+    property int oldX: win.x
+    property int oldY: win.y
     onXChanged: {
-        client.x = win.x
+        if(client.x !== oldX){
+            oldX = client.x
+            client.x = win.x
+        }
     }
     onYChanged: {
-        client.y = win.y
+        if(client.y !== oldY){
+            oldY = client.y
+            client.y = win.y
+        }
+    }
+    property int oldWidth: win.width
+    property int oldHeight: win.height
+    onWidthChanged: {
+        if(client.width !== oldWidth){
+            oldWidth = client.width
+            client.width = win.width
+        }
+    }
+    onHeightChanged: {
+        if(client.height !== oldHeight){
+            oldHeight = client.height
+            client.height = win.height
+        }
     }
 
     property int defMargin: 10
@@ -40,7 +64,7 @@ Window {
             ConnectForm {
                 id: connectForm
                 Layout.preferredHeight: 50
-                Layout.preferredWidth: 900
+                Layout.preferredWidth: 860
             }
 
 
@@ -88,30 +112,35 @@ Window {
             }
             Rectangle{
                 id: logList
-                Layout.fillWidth: true
+                Layout.preferredWidth: parent.width
                 Layout.fillHeight: true
-                Layout.preferredHeight: 350
-                Layout.alignment: Qt.AlignBottom
                 color: "#ddd"
                 radius: 5
-
                 Connections {
                     target: client
+                    function getTime(){
+                        var date = new Date()
+                        var hours = date.getHours() > 9 ? date.getHours() : "0"+date.getHours()
+                        var minutes = date.getMinutes() > 9 ? date.getMinutes() : "0"+date.getMinutes()
+                        var seconds = date.getSeconds() > 9 ? date.getSeconds() : "0"+date.getSeconds()
+                        return `${hours}:${minutes}:${seconds}`
+                    }
+
                     function onWasConnect(str) {
                         listModel.clear()
-                        listModel.append({display: "<Connected>"})
+                        listModel.append({display: `${getTime()} <Connected>`})
                     }
                     function onWasDisconnect(str) {
-                        listModel.append({display: "<Disconnected>"})
+                        listModel.append({display: `${getTime()} <Disconnected>`})
                     }
                     function onCommandSent(str) {
-                        listModel.append({display: "> "+str})
+                        listModel.append({display: `${getTime()} > `+str})
                     }
                     function onDataRecieved(str) {
-                        listModel.append({display: "< "+str})
+                        listModel.append({display: `${getTime()} < `+str})
                     }
                     function onError(str) {
-                        listModel.append({display: "< "+str})
+                        listModel.append({display: `${getTime()} < `+str})
                     }
                 }
 

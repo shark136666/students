@@ -63,6 +63,28 @@ void Client::setY(const int &value)
     emit yChanged();
 }
 
+int Client::width() const
+{
+    return mWidth;
+}
+
+void Client::setWidth(const int &value)
+{
+    mWidth = value;
+    emit widthChanged();
+}
+
+int Client::height() const
+{
+    return mHeight;
+}
+
+void Client::setHeight(const int &value)
+{
+    mHeight = value;
+    emit heightChanged();
+}
+
 void Client::doConnect()
 {
     if(mIsConnected){

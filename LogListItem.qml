@@ -11,8 +11,9 @@ Rectangle{
         width: parent.width
         height: parent.height
         text: model.display
-        font.bold: model.display[0] === ">" ? true : false
+        font.bold: model.display[9] === ">" ? true : false
         readOnly: true
         selectByMouse: true
+        wrapMode: Text.WordWrap
     }
 }

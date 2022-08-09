@@ -56,7 +56,7 @@ Rectangle{
         }
         TextField {
             id: portTF
-            Layout.preferredWidth: 120
+            Layout.preferredWidth: 80
             Layout.rightMargin: 20
             font.pixelSize: 14
             selectByMouse: true
@@ -66,7 +66,7 @@ Rectangle{
             }
             background: Rectangle {
                 anchors.centerIn: parent
-                implicitWidth: 110
+                implicitWidth: 70
                 implicitHeight: 30
                 border.width: parent.activeFocus ? 1 : 0
                 color: portTF.activeFocus ? "#fff" : "#ededed"
