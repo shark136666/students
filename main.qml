@@ -3,7 +3,7 @@ import QtQuick.Window 2.15
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.15
 
-Window {
+ApplicationWindow  {
     id: win
     width: client.width
     height: client.height
@@ -14,33 +14,15 @@ Window {
     x: client.x
     y: client.y
 
-    property int oldX: win.x
-    property int oldY: win.y
-    onXChanged: {
-        if(client.x !== oldX){
-            oldX = client.x
-            client.x = win.x
-        }
-    }
-    onYChanged: {
-        if(client.y !== oldY){
-            oldY = client.y
-            client.y = win.y
-        }
-    }
-    property int oldWidth: win.width
-    property int oldHeight: win.height
-    onWidthChanged: {
-        if(client.width !== oldWidth){
-            oldWidth = client.width
-            client.width = win.width
-        }
-    }
-    onHeightChanged: {
-        if(client.height !== oldHeight){
-            oldHeight = client.height
-            client.height = win.height
-        }
+    Connections {
+          target: Qt.application
+
+          onAboutToQuit: {
+              client.x = win.x
+              client.y = win.y
+              client.width = win.width
+              client.height = win.height
+          }
     }
 
     property int defMargin: 10
@@ -155,7 +137,7 @@ Window {
                         ScrollBar.vertical: ScrollBar {
                             policy: ScrollBar.AlwaysOn
                         }
-                        spacing: 2
+                        spacing: 4
                         model: ListModel {
                             id: listModel
                         }

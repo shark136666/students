@@ -16,6 +16,7 @@ RowLayout{
         text: model.display
         font.pixelSize: 16
         selectByMouse: true
+        selectionColor:  "#94DCFA"
         background: Rectangle {
                 color: parent.activeFocus ? "#fff" : "#f6f6f6"
                 border.width: parent.activeFocus ? 1 : 0

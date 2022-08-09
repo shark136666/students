@@ -28,6 +28,7 @@ Rectangle{
             Layout.rightMargin: 20
             font.pixelSize: 14
             selectByMouse: true
+            selectionColor:  "#94DCFA"
             text: client.address
             onEditingFinished: {
                 client.address = addressTF.displayText
@@ -60,6 +61,7 @@ Rectangle{
             Layout.rightMargin: 20
             font.pixelSize: 14
             selectByMouse: true
+            selectionColor:  "#94DCFA"
             text: client.port
             onEditingFinished: {
                 client.port = portTF.displayText

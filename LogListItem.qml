@@ -15,5 +15,6 @@ Rectangle{
         readOnly: true
         selectByMouse: true
         wrapMode: Text.WordWrap
+        selectionColor:  "#94DCFA"
     }
 }

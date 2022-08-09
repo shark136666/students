@@ -23,31 +23,32 @@ QML_IMPORT_PATH =
 QML_DESIGNER_IMPORT_PATH =
 
 # Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
+#qnx: target.path = /tmp/$${TARGET}/bin
+#else: unix:!android: target.path = /opt/$${TARGET}/bin
+#!isEmpty(target.path): INSTALLS += target
 
 # ----------------DEPLOY------------------
-isEmpty(TARGET_EXT) {
-    win32 {
-        TARGET_CUSTOM_EXT = .exe
-    }
-} else {
-    TARGET_CUSTOM_EXT = $${TARGET_EXT}
+
+CONFIG(release, debug|release) {
+    DESTDIR = $$PWD/../SocketTester_2.0
 }
 
-win32 {
-    DEPLOY_COMMAND = windeployqt
-}
+RETURN = $$escape_expand(\n\t)
+#QMAKE_POST_LINK += $$RETURN command1
 
-CONFIG( debug, debug|release ) {
-    # debug
-    DEPLOY_TARGET = $$shell_quote($$shell_path($${OUT_PWD}/debug/$${TARGET}$${TARGET_CUSTOM_EXT}))
-} else {
-    # release
-    DEPLOY_TARGET = $$shell_quote($$shell_path($${OUT_PWD}/release/$${TARGET}$${TARGET_CUSTOM_EXT}))
+defineTest(windeployqtInDESTDIR) {
+    ARGS = --qmldir $$PWD/../test
+    RETURN = $$escape_expand(\n\t)
+    QMAKE_POST_LINK += $$RETURN windeployqt $$ARGS $$quote($$shell_path($$DESTDIR))
+    export(QMAKE_POST_LINK)
 }
-QMAKE_POST_LINK = $${DEPLOY_COMMAND} $${DEPLOY_TARGET}
+PACKAGES = "--compiler-runtime"
+for(package,QT){
+    PACKAGES += "--$${package} "
+}
+PACKAGES += --no-svg --no-system-d3d-compiler --no-translations --no-opengl-sw --no-angle
+windeployqtInDESTDIR($$PACKAGES)
+
 # --------------END--DEPLOY----------------
 
 HEADERS += \
