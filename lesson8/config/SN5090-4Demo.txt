@@ -1,0 +1,12 @@
+[DEVICE]
+# фильтр ПЧ герцы
+filter_IF = 10 k
+
+# кол-во точек
+point_value = 200 
+
+# зачение атенюатора
+athenuator_value = 10
+
+#Код ЦАП
+cap_value = 6554
